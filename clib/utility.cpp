@@ -19,11 +19,12 @@
 #include "macros.h"
 #include "utility.h"
 #include <time.h>
-
+#include <stdlib.h>
+#include <langinfo.h>
+#include <string.h>
 
 
  using namespace JUJU;
-
 
 
 /*CSingleWriteMultiRead::CSingleWriteMultiRead(long lMaxReaders)

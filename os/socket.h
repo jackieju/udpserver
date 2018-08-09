@@ -401,7 +401,7 @@ OSLIB_DLL_FUNC_HEAD int OSUDPSendTo(int s, char *buffer, int len, char dest_ip[1
  *			+0 : bytes got
  * </pre>
  */
-OSLIB_DLL_FUNC_HEAD int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &nPort, long nTimeOutMilliSeconds = 0);
+OSLIB_DLL_FUNC_HEAD int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &nPort, struct sockaddr_in &addr, long nTimeOutMilliSeconds = 0);
 
 /**
  * <pre>

@@ -740,9 +740,11 @@ int OSCreateUDPSocket(void)
 // bind a port and an interface with a socket, you can use '*' as unkown interface
 int OSUDPBind(int *fd, int port, const char *interface_name)
 {
+      
 	int s;
     struct sockaddr_in sa;
     struct hostent hostinfo;
+  
 
 	RETVIF(fd, -1);
 
@@ -772,8 +774,9 @@ int OSUDPBind(int *fd, int port, const char *interface_name)
     }
 
     if (bind(s, (struct sockaddr *) &sa, (int) sizeof(sa)) == -1) 
-	{
+	{  
 #ifndef WIN32
+          
         fprintf(stdout, "Couldn't bind a UDP socket to the [%s:%d] with error:%s\n", interface_name, port, strerror(errno));
 #else
 		fprintf(stdout, "Couldn't bind a UDP socket to the [%s:%d] with error:%d\n", interface_name, port, WSAGetLastError());
@@ -781,7 +784,6 @@ int OSUDPBind(int *fd, int port, const char *interface_name)
 		CloseSocket(&s);
         return -1;
     }
-
     return s;
 }
 
@@ -853,8 +855,8 @@ int OSUDPSendTo(int s, char *buffer, int len)
 	long ret = -1;
  
     sa.sin_family = AF_INET;
-    sa.sin_port	= htons(g_nMultiCastPort);
-    sa.sin_addr.s_addr = inet_addr(g_sMulticastAddress);
+  //  sa.sin_port	= htons(g_nMultiCastPort);
+//    sa.sin_addr.s_addr = inet_addr(g_sMulticastAddress);
 
     if (ret = sendto(s, buffer, len, 0, (struct sockaddr *) &sa, (int) sizeof(sa)) == -1) 
 	{
@@ -880,10 +882,12 @@ int OSUDPSendTo(int s, char *buffer, int len, char dest_ip[16], int iPort)
 {
     struct sockaddr_in sa;
 	long ret = -1;
+    printf("server:send0\n");
 
     sa.sin_family = AF_INET;
     sa.sin_port	= htons(iPort);
     sa.sin_addr.s_addr = inet_addr(dest_ip);
+    printf("server:send1\n");
 
     if (ret = sendto(s, buffer, len, 0, (struct sockaddr *) &sa, (int) sizeof(sa)) == -1) 
 	{
@@ -894,7 +898,7 @@ int OSUDPSendTo(int s, char *buffer, int len, char dest_ip[16], int iPort)
 #endif
         return -1;
     }
-
+    printf("server:send:%d\n", ret);
     return ret;
 }
 
@@ -906,27 +910,36 @@ int OSUDPSendTo(int s, char *buffer, int len, char dest_ip[16], int iPort)
  *			 0 : no data available
  *			+0 : bytes got
  */
-int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &nPort, long nTimeOutMilliSeconds)
+int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &nPort, struct sockaddr_in &addr, long nTimeOutMilliSeconds)
 {
     char *buf;
     int bytes;
-	struct sockaddr_in addr;
+	//struct sockaddr_in addr;
 	long ret = -1;
 #ifdef WIN32
     int salen;
 #else
 	socklen_t salen;
 #endif
-
-	if (nTimeOutMilliSeconds > 0)
-		if ((ret = OSReadAvailable(s, nTimeOutMilliSeconds * 1000)) < 1)
-			return ret;
+	
+    if (nTimeOutMilliSeconds > 0)
+    if ((ret = OSReadAvailable(s, nTimeOutMilliSeconds * 1000)) < 1){
+        //printf("\nret:%d\n", ret);
+		    
+        	return ret;
+        }
+    
+    printf("\nserver:2:ret:%d\n", ret);
 
 	buf = (char *)malloc(UDP_PACKET_MAX_SIZE);	// Added by Zhang Yuan for some leaks.
+    printf("\nserver:recvfrom...\n");
 
     salen = sizeof(struct sockaddr_in);
     bytes = recvfrom(s, buf, UDP_PACKET_MAX_SIZE, 0,
                      (struct sockaddr *)&addr, &salen);
+                     
+                     printf("\nserver:get %d bytes\n", bytes);
+                     
     if (bytes == -1) 
 	{
         if (errno != EAGAIN)
@@ -943,13 +956,14 @@ int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &n
     }
 
 	// allocate space
-	pBuffer = new char [ bytes ];
+	pBuffer = new char [ bytes +1];
 	if (!pBuffer)
 	{
         printf("Couldn't allocate enough memory space, error :%s.\n", strerror(errno));
 		SAFEFREE(buf);
 		return -1;
 	}
+    memset(pBuffer, 0, bytes+1);
 
 	// copy data
 	nBufLen = bytes;
@@ -957,7 +971,8 @@ int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &n
 
 	// release unused memory space
 	SAFEFREE(buf);
-
+    buf = pBuffer;
+    
 	if (src_ip)
 	{
 #ifdef WIN32
@@ -972,7 +987,8 @@ int OSUDPRecvFrom(int s, char *&pBuffer, long &nBufLen, char src_ip[16], long &n
 	}
 
 	nPort = addr.sin_port;
-
+    
+   // printf("\n--%d\n", bytes);
     return bytes;
 }
 

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <string>
 #include <time.h>
 #include "log.h"

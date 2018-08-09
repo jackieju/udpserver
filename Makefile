@@ -8,9 +8,11 @@
 CC   = g++ 
 
 CLIB_OBJ = clib/array.o clib/exp.o clib/thread.o clib/log.o clib/utility.o os/os.o os/LogCache.o os/ostime.o os/socket.o os/str.o os/thread-pthread.o os/osutils.o os/log.o os/CSS_LOCKEX.o os/ConfigFile.o os/protected.o os/mutex.o os/LogLevel.o 
-OBJ = $(CLIB_OBJ) AbstractServer.o interface.o HttpServer.o
-EXEC_OBJ  =  $(OBJ)  main.o
+OBJ = $(CLIB_OBJ) AbstractServer.o UdpServer.o 
+EXEC_OBJ  =  $(OBJ)  main.o 
 CGI_OBJ = $(OBJ) cgi-bin/cs_cgi.o
+TEST = main
+TEST_CLIENT = udpclient
 #OBJ  = $(objs) $(RES)
 #OBJ  = $(objs)
 pp = cocoR1/cp.cpp
@@ -18,17 +20,21 @@ BIN_EXEC = server
 CGI = cgi-bin/cs.cgi
 BIN  = libnanohttp.so.1.0
 SOBIN=$(BIN:.so.1.0=.so)
-CFLAGS = -D__SUPPORT_OBJ -g -fPIC  -D_VMMANAGER -O2 -fomit-frame-pointer -w -W -Wall -Iclib -Ios -D_MACOS -I./ -D_64
+CFLAGS = -D__SUPPORT_OBJ -g -fPIC  -D_VMMANAGER -O2 -fomit-frame-pointer -w -W -Wall -Iclib -Ios -I./ -D_64 -pthread
 # -Wfatal-errors
 LINK=g++ 
-LFLAGS=-g
+LFLAGS=-g -pthread
 
 .PHONY: all all-before all-after clean clean-custom
 
 all: all-before $(BIN_EXEC) $(BIN) all-after
 
 lib: all-before $(BIN) all-after
-
+    
+test: all-before $(TEST) $(TEST_CLIENT) all-after
+    
+test_client: all-before $(TEST_CLIENT) all-after
+    
 #parser: $(pp)
 clean: clean-custom
 	rm -f $(OBJ) $(BIN)
@@ -36,107 +42,18 @@ clean: clean-custom
 	rm -f cgi-bin/cs_cgi.o
 DLLWRAP=g++
 
-HttpServer.o: HttpServer.cpp
-	$(CC) -c HttpServer.cpp -o HttpServer.o $(CFLAGS)
+UdpServer.o: UdpServer.cpp
+	$(CC) -c UdpServer.cpp -o UdpServer.o $(CFLAGS)
+    
+udpclient.o: udpclient.cpp
+	$(CC) -c udpclient.cpp -o udpclient.o $(CFLAGS)
 
-interface.o: interface.cpp
-	$(CC) -c interface.cpp -o interface.o $(CFLAGS)
-	
 main.o: main.cpp
 	$(CC) -c main.cpp -o main.o $(CFLAGS)
 
 AbstractServer.o: AbstractServer.cpp AbstractServer.h
 	$(CC) -c AbstractServer.cpp -o AbstractServer.o $(CFLAGS)
 	
-cscript.o: cscript.cpp
-	$(CC) -c cscript.cpp -o cscript.o $(CFLAGS)
-	
-cgi-bin/cs_cgi.o: cgi-bin/cs_cgi.cpp
-	$(CC) -c cgi-bin/cs_cgi.cpp -o cgi-bin/cs_cgi.o $(CFLAGS)
-	
-Configure.o: Configure.cpp
-	$(CC) -c Configure.cpp -o Configure.o $(CFLAGS)
-
-cocoR1/cp.cpp: cocoR/cs.atg cocoR/PARSER_C.FRM cocoR/PARSER_H.FRM
-	cd cocoR && ./cocor -A -F -X -S -G -C -L -D cs.atg && perl grep.pl > syntax
-	
-ObjectInst.o: ObjectInst.cpp
-	$(CC) -c ObjectInst.cpp -o ObjectInst.o $(CFLAGS)
-		
-ObjTable.o: ObjTable.cpp
-	$(CC) -c ObjTable.cpp -o ObjTable.o $(CFLAGS)
-	
-ClassDesTable.o: ClassDesTable.cpp
-	$(CC) -c ClassDesTable.cpp -o ClassDesTable.o $(CFLAGS)
-	
-Class.o: Class.cpp
-	$(CC) -c Class.cpp -o Class.o $(CFLAGS)
-	
-CCompiler.o: CCompiler.cpp
-	$(CC) -c CCompiler.cpp -o CCompiler.o $(CFLAGS)
-
-cp.o: cocoR/cp.cpp
-	$(CC) -c cocoR/cp.cpp -o cp.o $(CFLAGS)
-
-CR_ABS.o: cocoR/CR_ABS.cpp
-	$(CC) -c cocoR/CR_ABS.cpp -o CR_ABS.o $(CFLAGS)
-
-CR_ERROR.o: cocoR/CR_ERROR.cpp
-	$(CC) -c cocoR/CR_ERROR.cpp -o CR_ERROR.o $(CFLAGS)
-
-CR_PARSE.o: cocoR/CR_PARSE.cpp
-	$(CC) -c cocoR/CR_PARSE.cpp -o CR_PARSE.o $(CFLAGS)
-
-CR_SCAN.o: cocoR/CR_SCAN.cpp
-	$(CC) -c cocoR/CR_SCAN.cpp -o CR_SCAN.o $(CFLAGS)
-
-cs.o: cocoR/cs.cpp
-	$(CC) -c cocoR/cs.cpp -o cs.o $(CFLAGS)
-
-Function.o: Function.cpp
-	$(CC) -c Function.cpp -o Function.o $(CFLAGS)
-
-LoopTree.o: LoopTree.cpp
-	$(CC) -c LoopTree.cpp -o LoopTree.o $(CFLAGS)
-
-ObjDes.o: ObjDes.cpp
-	$(CC) -c ObjDes.cpp -o ObjDes.o $(CFLAGS)
-
-ClassDes.o: ClassDes.cpp
-	$(CC) -c ClassDes.cpp -o ClassDes.o $(CFLAGS)
-
-PubFuncTable.o: PubFuncTable.cpp
-	$(CC) -c PubFuncTable.cpp -o PubFuncTable.o $(CFLAGS)
-
-Request.o: Request.cpp
-	$(CC) -c Request.cpp -o Request.o $(CFLAGS)
-	
-Exp.o: Exp.cpp
-	$(CC) -c Exp.cpp -o Exp.o $(CFLAGS)
-
-ScriptFuncTable.o: ScriptFuncTable.cpp
-	$(CC) -c ScriptFuncTable.cpp -o ScriptFuncTable.o $(CFLAGS)
-
-#StdAfx.o: StdAfx.cpp
-#	$(CC) -c StdAfx.cpp -o StdAfx.o $(CFLAGS)
-
-SymbolTable.o: SymbolTable.cpp
-	$(CC) -c SymbolTable.cpp -o SymbolTable.o $(CFLAGS)
-
-utility.o: utility.cpp
-	$(CC) -c utility.cpp -o utility.o $(CFLAGS)
-
-VirtualMachine.o: VirtualMachine.cpp
-	$(CC) -c VirtualMachine.cpp -o VirtualMachine.o $(CFLAGS)
-
-VMException.o: VMException.cpp
-	$(CC) -c VMException.cpp -o VMException.o $(CFLAGS)
-
-compiler.o: compiler.cpp
-	$(CC) -c compiler.cpp -o compiler.o $(CFLAGS)
-
-VMManager.o: VMManager.cpp
-	$(CC) -c VMManager.cpp -o VMManager.o $(CFLAGS)
 
 linuxlib/IsWanted.o:linuxlib/IsWanted.cpp
 	$(CC) -c linuxlib/IsWanted.cpp -o linuxlib/IsWanted.o $(CFLAGS)
@@ -204,5 +121,11 @@ $(BIN_EXEC): $(EXEC_OBJ)
 $(BIN): $(OBJ)
 	$(DLLWRAP) -g -shared -Wl -soname=$(SOBIN)  $(OBJ)  -o ./bin/$(BIN) -lc -lcs -L../cs/bin
 
+$(TEST): $(EXEC_OBJ)
+	$(LINK) $(EXEC_OBJ) -o $(TEST) $(LFLAGS)
+    
+$(TEST_CLIENT): udpclient.cpp
+	$(CC) udpclient.cpp -o $(TEST_CLIENT)
+   
 install:
 	cp -fr bin/libnanohttp.so.1.0 /usr/lib

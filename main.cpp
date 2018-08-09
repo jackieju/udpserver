@@ -6,7 +6,7 @@
 
 #include "os/osutils.h"
 #include "AbstractServer.h"
-#include "HttpServer.h"
+#include "UdpServer.h"
 
 static int nport=3001;
 void applyOption(char* p1, char* p2)
@@ -50,9 +50,8 @@ int main(int num, char** args){
 	p->addHandler(HttpServer::http_handler);
 		fprintf(stderr, "-->%d", p->handler_number);
 */
-	HttpServer * server = new HttpServer();	
-		server->addHandler(HttpServer::http_handler);
-			server->addCSHandler("pattern", "className");
+	UdpServer * server = new UdpServer();	
+
 	server->start(nport);
 
 
